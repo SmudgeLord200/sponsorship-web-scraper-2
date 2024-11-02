@@ -7,6 +7,7 @@ import {
   CardContent,
   CardMedia,
   Container,
+  Divider,
   FormControl,
   InputLabel,
   MenuItem,
@@ -23,39 +24,32 @@ import ArrowUpwardOutlinedIcon from "@mui/icons-material/ArrowUpwardOutlined";
 const App = () => {
   const [searchBar, setSearchBar] = React.useState("");
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const [displayResult, setDisplayResult] = React.useState(true); // Check to false for default
 
   const [participantOption, setParticipantOption] = React.useState("");
   const [onlineOption, setOnlineOption] = React.useState("");
 
-  //const [json, setData]= React.useState(null);
   const [searchedResult, setSearchedResult] = React.useState("");
   const [filteredData, setFilteredData] = React.useState(json);
+
+  const [pageNum, setPageNum] = React.useState(0);
+
+  const nextPage = () => {
+    // console.log(filteredData.length);
+    setPageNum((pageNum + 6) % filteredData.length);
+    // console.log(pageNum);
+  };
+  const prevPage = () => {
+    // console.log(filteredData.length);
+    setPageNum((pageNum - 6) % filteredData.length);
+    // console.log((pageNum - 6) % filteredData.length);
+  };
 
   const toggleAdvancedSearch = () => {
     setIsExpanded(!isExpanded);
   };
 
-  const setInput = (e) => {
+  const setSearchBarInput = (e) => {
     setSearchBar(e.target.value);
-  };
-
-  const searchSponsors = () => {
-    // Implement your API calls here
-    /* fetch('/sponsors.json')
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-
-          return response.json();
-        })
-        .then((jsonData) => {
-            console.log(searchedResult);
-            setData(jsonData);
-        })
-        .catch((error) => console.error('Error fetching data:', error)); */
-    console.log(json);
   };
 
   const handlParticipantSelectChange = (event) => {
@@ -68,13 +62,44 @@ const App = () => {
 
   const displayFilteredData = (i) => {
     return (
-      <Box className="cardGroup">
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          gap: "20px",
+          width: "50vw",
+        }}
+      >
         {filteredData.slice(i, i + 2).map((data) => (
-          <Card className="resultCard">
+          <Card
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "15px",
+              border: "5px solid #FFFDD0",
+              borderRadius: "5px",
+              padding: "20px",
+              width: "50%",
+              textAlign: "center",
+              marginBottom: "2%",
+            }}
+          >
             <CardContent>
-              <Typography>{data["name"]}</Typography>
-              <CardMedia className="logo" image={data["logo"]} />
-              <Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                {data["name"]}
+              </Typography>
+              <Divider sx={{ backgroundColor: "white", marginTop: 2 }} />
+              <CardMedia
+                image={data["logo"]}
+                sx={{
+                  height: 150,
+                  width: "100%",
+                  backgroundSize: "contain",
+                  borderRadius: "4px",
+                }}
+              />
+              <Divider sx={{ backgroundColor: "white" }} />
+              <Typography mt={2}>
                 Average Attendance :{" "}
                 <strong>
                   {Math.round(data["participants_num"] / data["hackathon_num"])}
@@ -115,32 +140,43 @@ const App = () => {
       )
     );
     setFilteredData(filtered);
-    console.log(filtered);
+    // console.log(filtered);
   };
 
-  React.useEffect(searchSponsors, []);
-
   React.useEffect(() => {
-    const result = searchedResult + participantOption;
+    const result = searchedResult + participantOption + onlineOption;
+    // console.log("result is ", result);
     const lowercasedQuery = result
       .toLowerCase()
       .split(",")
       .map((element) => element.trimStart());
     filterData(lowercasedQuery);
-  }, [searchedResult, participantOption]);
+    // console.log("lowercased query is ", lowercasedQuery);
+  }, [searchedResult, participantOption, onlineOption]);
+
+  React.useEffect(() => {
+    if (!searchBar) {
+      setSearchedResult(""); // Reset searched result
+      setPageNum(0);
+      setParticipantOption("");
+      setOnlineOption("");
+      setFilteredData(json);
+      setIsExpanded(false); // Reset the isExpanded state to false
+    }
+  }, [searchBar]);
 
   return (
     <Container>
       <Header />
       <main>
-        <Stack direction="row" spacing={2} mt={2} className="searchBar">
+        <Stack direction="row" spacing={2} mt={2} mb={2}>
           <TextField
             type="search"
             id="search"
             name="search"
             label="Search sponsor..."
             value={searchBar}
-            onChange={setInput}
+            onChange={setSearchBarInput}
             variant="outlined"
             fullWidth
             sx={{
@@ -156,19 +192,25 @@ const App = () => {
             }}
           />
           <Button
-            variant="contained"
+            variant="outlined"
             color="primary"
             onClick={() => {
               setSearchedResult(searchBar);
+              setPageNum(0);
             }}
             disabled={!searchBar}
-            sx={{ backgroundColor: "#228B56", padding: 2 }}
+            sx={{
+              backgroundColor: "#228B56",
+              padding: 2,
+              color: "white",
+              "&:disabled": { backgroundColor: "grey" },
+            }}
           >
             Search
           </Button>
         </Stack>
 
-        <Stack className="advancedSearch text-bold">
+        <Stack mb={2}>
           <Button
             component="label"
             variant="text"
@@ -241,25 +283,51 @@ const App = () => {
                   }}
                   onChange={handleOnlineSelectChange}
                 >
-                  <MenuItem value="">In-Person</MenuItem>
-                  <MenuItem value="online">Online</MenuItem>
+                  <MenuItem value=",">In-Person</MenuItem>
+                  <MenuItem value=",online">Online</MenuItem>
                 </Select>
               </FormControl>
             </Stack>
           )}
         </Stack>
 
-        {displayResult && (
+        {filteredData.length != 0 ? (
           <>
             <Stack direction="column" spacing={2}>
-              <Typography variant="h6" className="resultsHeader text-bold">
-                Results
-              </Typography>
-              {filteredData && displayFilteredData(0)}
-              {filteredData && displayFilteredData(20)}
-              {filteredData && displayFilteredData(40)}
+              <Stack
+                direction={{ xs: "column", sm: "row", md: "row", lg: "row" }}
+                spacing={2}
+                justifyContent={"space-between"}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: "bold", marginBottom: "1rem" }}
+                >
+                  Results
+                </Typography>
+                <Stack direction="row" spacing={2}>
+                  <Button onClick={prevPage} variant="outlined">
+                    Previous
+                  </Button>
+                  <Button onClick={nextPage} variant="outlined">
+                    Next
+                  </Button>
+                </Stack>
+              </Stack>
+              {filteredData && displayFilteredData(pageNum)}
+              {filteredData && displayFilteredData(pageNum + 2)}
+              {filteredData && displayFilteredData(pageNum + 4)}
             </Stack>
           </>
+        ) : (
+          <Stack mt={4}>
+            <Typography
+              variant="h6"
+              sx={{ textAlign: "center", fontWeight: "bold" }}
+            >
+              Result Not Found
+            </Typography>
+          </Stack>
         )}
       </main>
     </Container>

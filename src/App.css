@@ -47,10 +47,6 @@ body {
   margin-bottom: 1rem;
 }
 
-.arrowButton {
-  color: #fff;
-}
-
 .optionGroup {
   display: flex;
   flex-direction: row;
