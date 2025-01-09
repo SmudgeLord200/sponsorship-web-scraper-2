@@ -3,6 +3,8 @@
 This project scrapes over 3000 sponsors from DevPost. Since the sponsors have previously sponsored hackathons, they are likely to sponsor again. 
 The returned data is a JSON file that is formatted for each sponsor by the following:
 
+For live product, please visit: https://smudgelord200.github.io/sponsorship-web-scraper-2/
+
 ``` javascript
 
 "www.stickergiant.com": {
